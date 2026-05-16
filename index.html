@@ -509,6 +509,16 @@
   @media (max-width: 820px) {
     .properties-grid { grid-template-columns: 1fr; }
   }
+  .properties-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-dim);
+    font-family: var(--serif);
+    font-size: 22px;
+    font-style: italic;
+    border: 1px solid var(--line);
+  }
 
   /* === DIFERENCIAIS === */
   .differentials {
@@ -833,43 +843,8 @@
       <div class="section-eyebrow">Portfólio</div>
       <h2 class="section-title">Imóveis em <em>destaque.</em></h2>
     </div>
-    <div class="properties-grid">
-      <a class="property-card reveal" href="https://wa.me/5551984576412?text=Tenho%20interesse%20em%20Lançamentos" target="_blank" rel="noopener">
-        <div class="img" style="background-image: url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=1200&q=80');"></div>
-        <div class="property-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></div>
-        <div class="property-info">
-          <span class="property-tag">— Lançamentos</span>
-          <h3>Empreendimentos exclusivos</h3>
-          <p>Acesso antecipado a unidades premium</p>
-        </div>
-      </a>
-      <a class="property-card reveal delay-1" href="https://wa.me/5551984576412?text=Tenho%20interesse%20em%20Lotes" target="_blank" rel="noopener">
-        <div class="img" style="background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80');"></div>
-        <div class="property-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></div>
-        <div class="property-info">
-          <span class="property-tag">— Lotes</span>
-          <h3>Terrenos em condomínios</h3>
-          <p>Localização e valorização garantidas</p>
-        </div>
-      </a>
-      <a class="property-card reveal" href="https://wa.me/5551984576412?text=Tenho%20interesse%20em%20Imóveis%20Prontos" target="_blank" rel="noopener">
-        <div class="img" style="background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80');"></div>
-        <div class="property-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></div>
-        <div class="property-info">
-          <span class="property-tag">— Imóveis Prontos</span>
-          <h3>Casas e apartamentos</h3>
-          <p>Para morar ou movimentar seu patrimônio</p>
-        </div>
-      </a>
-      <a class="property-card reveal delay-1" href="https://wa.me/5551984576412?text=Tenho%20interesse%20em%20Investimentos" target="_blank" rel="noopener">
-        <div class="img" style="background-image: url('https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1200&q=80');"></div>
-        <div class="property-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></div>
-        <div class="property-info">
-          <span class="property-tag">— Investimentos</span>
-          <h3>Oportunidades selecionadas</h3>
-          <p>Análise de retorno e potencial de valorização</p>
-        </div>
-      </a>
+    <div class="properties-grid" id="propertiesGrid">
+      <div class="properties-state">Carregando imóveis...</div>
     </div>
   </div>
 </section>
@@ -1010,15 +985,69 @@
   links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
 
   // Reveal on scroll
-  const observer = new IntersectionObserver((entries) => {
+  const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
         e.target.classList.add('visible');
-        observer.unobserve(e.target);
+        revealObserver.unobserve(e.target);
       }
     });
   }, { threshold: 0.15 });
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  // === Imóveis via Netlify Function (token fica no lado servidor) ===
+  const WHATSAPP = '5551984576412';
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  async function loadProperties() {
+    const grid = document.getElementById('propertiesGrid');
+    if (!grid) return;
+    try {
+      const res = await fetch('/.netlify/functions/properties');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      renderProperties(grid, data.records || []);
+    } catch (err) {
+      console.error('Erro ao carregar imóveis:', err);
+      grid.innerHTML = '<div class="properties-state">Em breve. Novos imóveis em curadoria.</div>';
+    }
+  }
+
+  function renderProperties(grid, records) {
+    if (!records.length) {
+      grid.innerHTML = '<div class="properties-state">Em breve. Novos imóveis em curadoria.</div>';
+      return;
+    }
+    grid.innerHTML = records.map((rec, i) => {
+      const f = rec.fields || {};
+      const attachment = (f.Attachments && f.Attachments[0]) || (f.Fotos && f.Fotos[0]);
+      const photo = attachment?.thumbnails?.large?.url || attachment?.url || '';
+      const title = escapeHtml(f.Nome || 'Imóvel exclusivo');
+      const category = escapeHtml(f.Categoria || 'Imóvel');
+      const description = escapeHtml(f.Notas || '');
+      const message = encodeURIComponent(`Olá Davi, tenho interesse no imóvel "${f.Nome || ''}".`);
+      const delay = i % 2 === 1 ? ' delay-1' : '';
+      return `
+        <a class="property-card reveal${delay}" href="https://wa.me/${WHATSAPP}?text=${message}" target="_blank" rel="noopener">
+          ${photo ? `<div class="img" style="background-image: url('${photo}');"></div>` : ''}
+          <div class="property-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></div>
+          <div class="property-info">
+            <span class="property-tag">— ${category}</span>
+            <h3>${title}</h3>
+            ${description ? `<p>${description}</p>` : ''}
+          </div>
+        </a>
+      `;
+    }).join('');
+    grid.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  }
+
+  loadProperties();
 </script>
 
 </body>
