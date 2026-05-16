@@ -63,13 +63,65 @@
     border-bottom: 1px solid var(--line);
   }
   .logo {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 500;
-    letter-spacing: .15em;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
     color: var(--text);
   }
-  .logo span { color: var(--gold); }
+  .logo-mark {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--gold);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: .05em;
+    flex-shrink: 0;
+    position: relative;
+    transition: all .4s ease;
+  }
+  .logo-mark::before,
+  .logo-mark::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border: 1px solid var(--gold);
+  }
+  .logo-mark::before { top: -3px; left: -3px; border-right: none; border-bottom: none; }
+  .logo-mark::after  { bottom: -3px; right: -3px; border-left: none; border-top: none; }
+  .logo:hover .logo-mark { background: var(--gold); color: #0a0a0a; }
+  .logo-text {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+  .logo-name {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: .22em;
+    color: var(--text);
+  }
+  .logo-tag {
+    font-family: var(--sans);
+    font-size: 9px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 5px;
+    font-weight: 400;
+  }
+  @media (max-width: 540px) {
+    .logo-tag { display: none; }
+    .logo-name { font-size: 14px; letter-spacing: .18em; }
+    .logo-mark { width: 36px; height: 36px; font-size: 14px; }
+  }
   .nav-links {
     display: flex;
     gap: 36px;
@@ -651,7 +703,13 @@
 
 <!-- NAV -->
 <nav id="nav">
-  <a href="#" class="logo">DAVI <span>SANTIAGO</span></a>
+  <a href="#" class="logo">
+    <span class="logo-mark">DS</span>
+    <span class="logo-text">
+      <span class="logo-name">DAVI SANTIAGO</span>
+      <span class="logo-tag">Imóveis de Alto Padrão</span>
+    </span>
+  </a>
   <ul class="nav-links" id="navLinks">
     <li><a href="#sobre">Sobre</a></li>
     <li><a href="#imoveis">Imóveis</a></li>
@@ -846,8 +904,14 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="#" class="logo">DAVI <span>SANTIAGO</span></a>
-        <p>Corretor de imóveis de alto padrão. Curadoria, estratégia e atendimento sob medida para decisões patrimoniais.</p>
+        <a href="#" class="logo">
+          <span class="logo-mark">DS</span>
+          <span class="logo-text">
+            <span class="logo-name">DAVI SANTIAGO</span>
+            <span class="logo-tag">Imóveis de Alto Padrão</span>
+          </span>
+        </a>
+        <p style="margin-top: 20px;">Corretor de imóveis de alto padrão. Curadoria, estratégia e atendimento sob medida para decisões patrimoniais.</p>
       </div>
       <div class="footer-col">
         <h4>Navegação</h4>
